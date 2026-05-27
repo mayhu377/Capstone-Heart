@@ -1,0 +1,65 @@
+.obj--body-obj1 {
+  --ox: 45;
+  --oy: 720;
+  --obj-scale: 1.6;
+}
+
+.obj--body-obj2 {
+  --ox: 623;
+  --oy: 857;
+  --obj-scale: 0.6;
+}
+
+.obj--head-obj1 {
+  --ox: 890;
+  --oy: 622;
+  --obj-scale: 0.6;
+}
+
+.obj--head-obj2 {
+  --ox: 1626;
+  --oy: 557;
+}
+
+.obj--limb-obj1 {
+  --ox: 1113;
+  --oy: 491;
+}
+
+.obj--limb-obj2 {
+  --ox: 320;
+  --oy: 327;
+  --obj-scale: 0.6;
+}
+
+.obj--limb-obj3 {
+  --ox: 1104;
+  --oy: 802;
+  --obj-scale: 0.9;
+}
+
+.obj--special-obj1 {
+  --ox: 775;
+  --oy: 1008;
+  --obj-scale: 0.6;
+}
+
+.obj--special-obj2 {
+  --ox: 1513;
+  --oy: 949;
+  --obj-scale: 0.6;
+}
+
+.obj--special-obj3 {
+  --ox: 979;
+  --oy: 0;
+  --obj-scale: 0.6;
+}
+
+/* NPC click hotspot — scene coords on 2048×1244 art (tune --npc-click-*) */
+.npc-click-target {
+  --npc-click-ox: 884;
+  --npc-click-oy: 480;
+  --npc-click-w: 280;
+  --npc-click-h: 340;
+}

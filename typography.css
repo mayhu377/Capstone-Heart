@@ -1,0 +1,37 @@
+/* ── Typography ──────────────────────────────────────────────
+     h1  — Kiln Serif Spiked   24px / 600   (header)
+     h2  — Kiln Serif Spiked   20px / 600
+     h3  — Bahnschrift         18px / 400   (<p>)
+     h4  — Bahnschrift         16px / 300   (caption)
+*/
+
+h1 {
+  font-family: "kiln-serif-spiked", sans-serif;
+  font-weight: 600;
+  font-style: normal;
+  font-size: 20px;
+}
+
+h2 {
+  font-family: "kiln-serif-spiked", sans-serif;
+  font-weight: 600;
+  font-style: normal;
+  font-size: 16px;
+}
+
+h3,
+p {
+  font-family: "bahnschrift", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+h4 {
+  font-family: "bahnschrift", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+  font-size: 12px;
+  line-height: 1.55;
+}

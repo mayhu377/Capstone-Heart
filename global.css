@@ -1,0 +1,1733 @@
+/* 1-bit “old laptop” shell — flat black & white, chunky borders, dither */
+
+:root {
+  --ink: #0a0a0a;
+  --paper: #f4f4f0;
+  --panel: #ffffff;
+  --line: #000000;
+  --muted: #333333;
+  --dither: repeating-conic-gradient(#0a0a0a 0% 25%, transparent 0% 50%) 50% / 2px 2px;
+  --font-serif: Georgia, "Times New Roman", Times, serif;
+  --font-ui: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  --border-thick: 2px solid var(--line);
+  --bevel-light: #ffffff;
+  --bevel-dark: #000000;
+  --shell-padding: 10px;
+  /* Fixed right column (px); left fills remainder until layout lock */
+  --right-panel-w: 424px; /*CHANGE*/
+  --layout-lock-w: 1400px;
+  --left-min-w: calc(var(--layout-lock-w) - var(--right-panel-w));
+  /* Hover hint art — width only; height follows hint image ratio (~217px tall in source) */
+  --ui-hint-w: 200px;
+  /* Gap between hint and control (tools + piece slots) */
+  --ui-hint-gap: 2px;
+  /* Above left panel, identity collage layers, and toasts */
+  --ui-hint-z: 10000;
+  --color-filter: #172b54;
+  --color-filter-opacity: 1;
+  --color-filter-z: 10001;
+  --left-panel-z: 1;
+  --right-panel-z: 2;
+  --identity-art-w: 2018;
+  --identity-art-h: 2900;
+
+  /*
+   * Scene modals (Heart, About, Help, Identities) — width as % of gameplay-scene width.
+   * Scene art is 2048px wide (--scene-art-w on .gameplay-scene). Height follows image ratio.
+   * Vertical position: 0 = centered in scene; positive top-pct = nudge down from center.
+   */
+  --scene-art-w: 2048;
+  --heart-modal-size-pct: 23.4;
+  --about-modal-size-pct: 58.6;
+  --help-modal-size-pct: 23.4;
+  --identities-modal-size-pct: 53.7;
+  --heart-modal-top-pct: -300;
+  --about-modal-top-pct: -300;
+  --help-modal-top-pct: -300;
+  --identities-modal-top-pct: -500; /*CHANGE*/
+  --scene-modal-overlay-padding-pct: 0.78;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  color: var(--ink);
+}
+
+body {
+  box-sizing: border-box;
+  padding: var(--shell-padding);
+  background: #000;
+}
+
+/* Full-screen blue grade — topmost layer; tune strength via --color-filter-opacity */
+.color-filter {
+  position: fixed;
+  inset: 0;
+  z-index: var(--color-filter-z);
+  background-color: var(--color-filter);
+  opacity: var(--color-filter-opacity);
+  mix-blend-mode: color;
+  pointer-events: none;
+}
+
+main {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* Left column: header + gameplay + dialogue (vertical stack) */
+.left {
+  position: relative;
+  z-index: var(--left-panel-z);
+  flex: 1 1 0;
+  min-width: var(--left-min-w);
+  min-height: 0;
+  max-width: calc(100% - var(--right-panel-w));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #000;
+  border-right: var(--border-thick);
+}
+
+.menubar {
+  flex: 0 0 31px;
+}
+
+/* Fills below header; dialogue is an absolute layer on top (like identity-frame) */
+.left-play {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #000;
+  --lp-dialogue-max-height: 38%;
+  --lp-dialogue-bottom: 0;
+  --lp-dialogue-z: 4;
+  /*
+   * blue_NPC — % of the dialogue box (.left-dialogue; anchor synced in script.js).
+   * Layer z-index: above scene objects, below overlays/modals (see --npc-portrait-z).
+   */
+  --npc-portrait-left: -8%;
+  --npc-portrait-bottom: -80%;
+  --npc-portrait-width: 45%;
+  --npc-portrait-shadow: 2px 2px 3px rgba(0, 0, 0, 0.45);
+  /*
+   * Text on dialogue image (% of overlay box; does not affect dialogue-img).
+   * --dlg-title-* = Movie Theater. --dlg-body-* = paragraph.
+   */
+  --dlg-title-left: 6%;
+  --dlg-title-top: 15%;
+  --dlg-title-width: 43%;
+  --dlg-title-size: 24;
+  --dlg-body-left: 6%;
+  --dlg-body-top: 38%;
+  --dlg-body-width: 77%;
+  --dlg-body-size: 14;
+  /* For responsive type scale only (match dialogue.png width in px) */
+  --dlg-art-w: 1200;
+}
+
+.left-dialogue {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--lp-dialogue-bottom);
+  z-index: var(--lp-dialogue-z);
+  width: 100%;
+  max-height: var(--lp-dialogue-max-height);
+  min-width: 0;
+  overflow: visible;
+  line-height: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* Gameplay viewport: full play area (scene visible under dialogue art) */
+.gameplay-viewport {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  margin: 2px;
+  border: var(--border-thick);
+  box-shadow: 3px 3px 0 #000;
+  background: #000;
+}
+
+.menubar {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 2vw, 20px);
+  width: 100%;
+  min-width: 0;
+  height: 31px;
+  box-sizing: border-box;
+  padding: 0 8px 0 10px;
+  background: #fff;
+  border-bottom: none;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) inset;
+}
+
+.menubar-logo {
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.menubar-item {
+  margin: 0;
+  flex-shrink: 0;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.menubar-item--heart, .menubar-item--about, .menubar-item--help, .menubar-item--identities {
+  cursor: pointer;
+  user-select: none;
+}
+
+.menubar-item--heart:hover,
+.menubar-item--about:hover,
+.menubar-item--help:hover,
+.menubar-item--identities:hover {
+  opacity: 0.9;
+}
+
+.heart-panel {
+  position: relative;
+  display: block;
+  width: 100%;
+  line-height: 0;
+}
+
+.heart-panel-bg {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+.heart-panel-bg--open {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+}
+
+.heart-panel.is-open .heart-panel-bg--close {
+  opacity: 0;
+}
+
+.heart-panel.is-open .heart-panel-bg--open {
+  opacity: 1;
+}
+
+.heart-dagger {
+  position: absolute;
+  top: 70%;
+  left: 6%;
+  width: 33%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  transform: translate(-50%, -50%);
+}
+
+.heart-dagger-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  transition: opacity var(--heart-fade-ms) ease;
+}
+
+.heart-dagger-img--open {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+}
+
+.heart-panel.is-open .heart-dagger-img--close {
+  opacity: 0;
+}
+
+.heart-panel.is-open .heart-dagger-img--open {
+  opacity: 1;
+}
+
+.heart-pins {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--heart-fade-ms) ease,
+    visibility 0s linear var(--heart-fade-ms);
+}
+
+.heart-panel.is-open .heart-pins {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--heart-fade-ms) ease,
+    visibility 0s linear 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heart-panel {
+    --heart-fade-ms: 0ms;
+  }
+}
+
+.heart-pin {
+  position: absolute;
+  width: 30%;
+  height: auto;
+  pointer-events: none;
+}
+
+.heart-pin--blue {
+  top: 36%;
+  left: 14%;
+}
+
+.heart-pin--yellow {
+  top: 36%;
+  left: 42%;
+}
+
+.heart-pin--green {
+  top: 60%;
+  left: 38%;
+}
+
+.heart-pin--red {
+  top: 53%;
+  left: 16%;
+}
+
+/* Region below menubar: scene cover-fills this box (overflow clipped); CQ host for .gameplay-scene */
+.scene-host {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  contain: paint;
+  container-type: size;
+  container-name: gameplay-viewport;
+}
+
+.gameplay-scene .gameplay-scene-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Same coordinate box as bg (2048×1244 %); scales with .gameplay-scene */
+.gameplay-scene .gameplay-scene-objects {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+  cursor: default;
+  pointer-events: auto;
+}
+
+.gameplay-scene .obj {
+  position: absolute;
+  left: calc(var(--ox) / var(--art-w) * 100%);
+  top: calc(var(--oy) / var(--art-h) * 100%);
+  width: calc(var(--obj-w, 267) * var(--obj-scale, 1) / var(--art-w) * 100%);
+  height: calc(var(--obj-h, 223) * var(--obj-scale, 1) / var(--art-h) * 100%);
+  transform-origin: center center;
+  cursor: pointer;
+  display: block;
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow: visible;
+  transition: transform 0.15s ease, opacity 0.3s ease;
+  user-select: none;
+}
+
+.gameplay-scene .obj:hover {
+  transform: scale(1.08);
+}
+
+.gameplay-scene .obj.gone {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gameplay-scene .obj .obj-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  display: block;
+}
+
+/* NPC click target — inside scene coordinate box */
+.gameplay-scene-NPC {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.gameplay-scene .npc-click {
+  position: absolute;
+  left: 45%;
+  top: 41.5%;
+  width: 12%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: default;
+  pointer-events: auto;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gameplay-scene .npc-click:hover,
+.gameplay-scene .npc-click:active,
+.gameplay-scene .npc-click:focus,
+.gameplay-scene .npc-click:focus-visible {
+  transform: none;
+  opacity: 1;
+  outline: none;
+}
+
+.gameplay-scene .npc-click-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+}
+
+/* blue_NPC — above scene art/objects, below overlays (z 100+) and .left-dialogue */
+.gameplay-scene .npc-portrait-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--npc-portrait-z);
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Sized/positioned to match .left-dialogue via syncNpcPortraitToDialogue() */
+.gameplay-scene .npc-portrait-anchor {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: var(--lp-dialogue-max-height, 38%);
+  pointer-events: none;
+  overflow: visible;
+}
+
+.gameplay-scene .npc-portrait {
+  position: absolute;
+  left: var(--npc-portrait-left);
+  bottom: var(--npc-portrait-bottom);
+  width: var(--npc-portrait-width);
+  line-height: 0;
+  pointer-events: none;
+}
+
+.gameplay-scene .npc-portrait-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left bottom;
+  pointer-events: none;
+  filter: drop-shadow(var(--npc-portrait-shadow));
+}
+
+/* Right column: fixed width, does not shrink */
+.right {
+  position: relative;
+  z-index: var(--right-panel-z);
+  flex: 0 0 var(--right-panel-w);
+  width: var(--right-panel-w);
+  min-width: var(--right-panel-w);
+  max-width: var(--right-panel-w);
+  height: 100%;
+  min-height: 0;
+  border-left: var(--border-thick);
+  background: #000;
+  overflow: visible;
+}
+
+/* Toasts from script.js */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  z-index: 9999;
+  max-width: min(360px, calc(100% - 32px));
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #fff;
+  background: #000;
+  border: 2px solid #000;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 12px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast.on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.gameplay-scene {
+  --art-w: 2048;
+  --art-h: 1244;
+  --npc-portrait-z: 50;
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  aspect-ratio: 2048 / 1244;
+  overflow: visible;
+  pointer-events: none;
+  container-type: inline-size;
+  container-name: gameplay-scene;
+}
+
+@supports (width: 1cqi) {
+  .gameplay-scene {
+    width: max(100cqi, calc(85cqb * var(--art-w) / var(--art-h)));
+    height: auto;
+  }
+}
+
+@supports not (width: 1cqi) {
+  .gameplay-scene {
+    width: 100%;
+    max-height: 85%;
+    height: auto;
+    aspect-ratio: 2048 / 1244;
+  }
+}
+
+
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: visible;
+}
+
+.rpanel-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-height: 0;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.rpanel-layer--identity {
+  position: relative;
+  width: 100%;
+  margin-top: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+  order: 1;
+  line-height: 0;
+  pointer-events: none;
+}
+
+.rpanel-identity-title {
+  position: absolute;
+  left: 33%;
+  top: 3.8%;
+  z-index: 6;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* In-flow bg sets identity height; frame + builder overlay it */
+.rpanel-layer--identity-bg {
+  position: relative;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: top center;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.rpanel-layer--identity-frame {
+  position: absolute;
+  top: -20px;
+  left: -22px;
+  width: 110%;
+  height: auto;
+  max-width: none;
+  object-fit: contain;
+  object-position: top left;
+  transform-origin: top left;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.rpanel-layer--builder {
+  position: absolute;
+  top: 2%;
+  right: 6%;
+  bottom: 2%;
+  left: 6%;
+  z-index: 2;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.rpanel-layer--tools {
+  position: relative;
+  width: 100%;
+  margin-top: 8px;
+  z-index: 4;
+  flex: 0 0 auto;
+  order: 2;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: visible;
+  background: none;
+  pointer-events: auto;
+  /* height set by sizeToolStrip() in script.js */
+}
+
+/* Bar in flow sets box height; fill + numbers are absolute % inside this layer */
+.rpanel-layer--progress {
+  position: relative;
+  width: 80%;
+  max-width: 100%;
+  margin-top: -82px;
+  z-index: 2;
+  flex: 0 0 auto;
+  order: 3;
+  min-width: 0;
+  box-sizing: border-box;
+  line-height: 0;
+  overflow: visible;
+  pointer-events: none;
+  --rp-progress-steps: 6;
+  --rp-progress-count: 0;
+  --rp-progress-fill-left: 20%;
+  --rp-progress-fill-top: 41.5%;
+  --rp-progress-fill-full: 76%;
+}
+
+.rpanel-progress-bar {
+  position: relative;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: top center;
+  pointer-events: none;
+}
+
+/* Clip grows 0→6/6 from fixed left; img stays full width (no stretch) */
+.rpanel-progress-fill {
+  position: absolute;
+  left: var(--rp-progress-fill-left);
+  top: var(--rp-progress-fill-top);
+  width: calc(
+    var(--rp-progress-fill-full) * var(--rp-progress-count) /
+      var(--rp-progress-steps)
+  );
+  overflow: hidden;
+  line-height: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.rpanel-layer-progress {
+  display: block;
+  width: calc(
+    100% * var(--rp-progress-steps) / max(var(--rp-progress-count), 1)
+  );
+  height: auto;
+  max-width: none;
+  object-fit: cover;
+  object-position: top left;
+  pointer-events: none;
+}
+
+/* top/left are % of .rpanel-layer--progress (height comes from .rpanel-progress-bar) */
+.progress-number {
+  position: absolute;
+  left: 5.2%;
+  top: 43.3%;
+  margin: 0;
+  color: #fff;
+  z-index: 1;
+}
+
+.progress-sum {
+  position: absolute;
+  left: 11.5%;
+  top: 43.3%;
+  margin: 0;
+  color: #fff;
+  z-index: 1;
+}
+
+.rpanel-layer--pieces {
+  position: absolute;
+  top: -173px;
+  left: -45px;
+  margin-top: 0;
+  transform-origin: top left;
+  z-index: 4;
+  flex: 0 0 auto;
+  order: 4;
+  min-width: 0;
+  box-sizing: border-box;
+  line-height: 0;
+  overflow: visible;
+  pointer-events: none;
+  width: auto;
+  max-width: none;
+}
+
+.pieces-board {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.pieces-bg {
+  display: block;
+  width: 120%;
+  height: auto;
+  max-width: none;
+  object-fit: contain;
+  object-position: top left;
+  pointer-events: none;
+}
+
+/* Six horizontal slots — tune --piece-slot-*-left / top on .pieces-slots */
+.pieces-slots {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  --piece-slot-size: 16%;
+  --piece-slot-top: 70.5%;
+  --piece-slot-0-left: 21%;
+  --piece-slot-1-left: 36.8%;
+  --piece-slot-2-left: 52.8%;
+  --piece-slot-3-left: 68.6%;
+  --piece-slot-4-left: 84.4%;
+  --piece-slot-5-left: 100.2%;
+}
+
+.piece-slot {
+  position: absolute;
+  top: var(--piece-slot-top);
+  width: var(--piece-slot-size);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: default;
+  pointer-events: auto;
+  line-height: 0;
+  transform: translate(-50%, -50%);
+}
+
+.piece-slot[data-slot='0'] {
+  left: var(--piece-slot-0-left);
+}
+
+.piece-slot[data-slot='1'] {
+  left: var(--piece-slot-1-left);
+}
+
+.piece-slot[data-slot='2'] {
+  left: var(--piece-slot-2-left);
+}
+
+.piece-slot[data-slot='3'] {
+  left: var(--piece-slot-3-left);
+}
+
+.piece-slot[data-slot='4'] {
+  left: var(--piece-slot-4-left);
+}
+
+.piece-slot[data-slot='5'] {
+  left: var(--piece-slot-5-left);
+}
+
+.piece-slot-frame {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+.piece-slot-thumb {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  filter: grayscale(1) contrast(1.05);
+}
+
+.piece-slot.is-filled {
+  cursor: pointer;
+}
+
+.piece-slot.is-filled:hover .piece-slot-thumb {
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+/* Empty slots stay at fixed coordinates; only hide interaction/visuals */
+.piece-slot.is-empty {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Hover hints (tools + filled piece slots) */
+.tool-btn.has-ui-hint {
+  position: relative;
+}
+
+/* Must follow .has-ui-hint — piece slots are absolutely positioned on the board */
+.piece-slot.has-ui-hint {
+  position: absolute;
+}
+
+.ui-hint {
+  position: absolute;
+  left: 50%;
+  width: var(--ui-hint-w);
+  height: auto;
+  object-fit: contain;
+  object-position: center bottom;
+  transform: translateX(-50%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: var(--ui-hint-z);
+  transition:
+    opacity 0.12s ease,
+    visibility 0s linear 0.12s;
+}
+
+/* Lift tool/piece layers above identity frame while a hint is visible */
+.rpanel-stage:has(.has-ui-hint:hover) .rpanel-layer--tools,
+.rpanel-stage:has(.has-ui-hint:focus-visible) .rpanel-layer--tools,
+.rpanel-stage:has(.has-ui-hint:hover) .rpanel-layer--pieces,
+.rpanel-stage:has(.has-ui-hint:focus-visible) .rpanel-layer--pieces {
+  z-index: calc(var(--ui-hint-z) - 1);
+}
+
+.tool-btn.has-ui-hint .ui-hint,
+.piece-slot.has-ui-hint .ui-hint {
+  bottom: calc(100% + var(--ui-hint-gap));
+}
+
+.has-ui-hint:hover .ui-hint,
+.has-ui-hint:focus-visible .ui-hint {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.12s ease,
+    visibility 0s;
+}
+
+.piece-slot:not(.is-filled) .ui-hint {
+  display: none;
+}
+
+.rpanel {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+}
+
+/* ── Tool strip: 5 tools at full height; proceed fills remaining width ─ */
+.tool-list {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+  font-size: 0;
+}
+
+.tool-list li {
+  flex: 0 0 auto;
+  min-width: 0;
+  display: block;
+  margin: 0;
+  padding: 0;
+  line-height: 0;
+}
+
+.tool-btn {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  font-size: 0;
+}
+
+.tool-btn-icon {
+  display: block;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  object-fit: contain;
+  object-position: bottom left;
+  pointer-events: none;
+  vertical-align: bottom;
+}
+
+.tool-btn--proceed:disabled {
+  cursor: not-allowed;
+}
+
+.tool-btn--proceed:not(:disabled) {
+  cursor: pointer;
+}
+
+.tool-btn--active {
+  outline: 2px dashed var(--line);
+  outline-offset: 2px;
+}
+
+.builder--resize-mode {
+  cursor: ns-resize;
+}
+
+/* ── Dialogue: img sets layout; title/body positioned separately on top ─ */
+
+.left-dialogue .dialogue-img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: var(--lp-dialogue-max-height, 38%);
+  margin: 0;
+  border: none;
+  object-fit: contain;
+  object-position: bottom center;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Out of flow — does not change dialogue-img size or position (--dlg-* on .left-play) */
+.left-dialogue .dialogue-content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: visible;
+  pointer-events: none;
+  container-type: size;
+  container-name: dialogue;
+}
+
+.dialogue-title {
+  position: absolute;
+  left: 43%;
+  top: 40%;
+  margin: 0;
+  padding: 0; 
+  text-align: left;
+  pointer-events: none;
+}
+
+.dialogue-body {
+  position: absolute;
+  left: 6%;
+  top: 55%;
+  width: 77%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  text-align: left;
+  background: transparent;
+  pointer-events: none;
+}
+
+@supports (font-size: 1cqi) {
+  .dialogue-title {
+    font-size: calc(var(--dlg-title-size) / var(--dlg-art-w) * 100cqi);
+  }
+
+  .dialogue-body p {
+    font-size: calc(var(--dlg-body-size) / var(--dlg-art-w) * 100cqi);
+  }
+}
+
+@supports not (font-size: 1cqi) {
+  .dialogue-title {
+    font-size: calc(var(--dlg-title-size) / var(--dlg-art-w) * 100%);
+  }
+
+  .dialogue-body p {
+    font-size: calc(var(--dlg-body-size) / var(--dlg-art-w) * 100%);
+  }
+}
+
+/* ── Placed features (draggable inside builder) ── */
+
+.placed {
+  position: absolute;
+  z-index: 1;
+  cursor: grab;
+  user-select: none;
+  line-height: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  transition: filter 0.12s ease;
+}
+
+.placed .placed-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+  transform-origin: center center;
+}
+
+.placed:hover:not(.is-selected) {
+  filter: drop-shadow(0 1px 4px rgba(0, 78, 196, 0.7));
+}
+
+.placed.is-selected {
+  filter: drop-shadow(0 2px 6px rgba(0, 78, 196, 0.9));
+}
+
+.placed.is-selected:hover {
+  filter: drop-shadow(0 3px 8px rgba(0, 78, 196, 1));
+}
+
+.placed:active {
+  cursor: grabbing;
+}
+
+/* ── Collected pills ── */
+
+.pill-section {
+  width: 100%;
+  border-top: none;
+  padding-top: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 0;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 0;
+  border: 2px solid #000;
+  background: #fff;
+  font-size: 10px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #000;
+  transition: transform 0.08s ease, background 0.1s ease;
+}
+
+.pill:hover {
+  background: #eee;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #000;
+}
+
+.pill .p-thumb {
+  flex-shrink: 0;
+  border: 1px solid #000;
+}
+
+.pill .p-thumb img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  border-radius: 0;
+  display: block;
+  filter: grayscale(1);
+}
+
+.pill .p-name {
+  flex: 1;
+  font-size: 10px;
+  font-weight: 600;
+  color: #000;
+}
+
+.pill .p-slot {
+  font-size: 8px;
+  font-family: var(--font-mono, monospace);
+  color: #333;
+  text-transform: uppercase;
+}
+
+.pill .p-z {
+  font-size: 8px;
+  font-family: var(--font-mono, monospace);
+  padding: 2px 6px;
+  border-radius: 0;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+}
+
+.pill-empty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  font-size: 10px;
+  color: #555;
+  border: 1px dashed #000;
+  opacity: 1;
+}
+
+.pill-empty .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 0;
+  border: 1px dashed #000;
+  flex-shrink: 0;
+  background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0 / 3px 3px;
+}
+
+/* ── Heart / About / Help / Identities — centered gameplay scene overlays ── */
+
+.gameplay-scene .heart-overlay,
+.gameplay-scene .about-overlay,
+.gameplay-scene .help-overlay,
+.gameplay-scene .identities-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--scene-modal-overlay-padding-pct) * 1cqw);
+  box-sizing: border-box;
+  overflow: visible;
+  background: repeating-conic-gradient(#fff 0% 25%, transparent 0% 50%) 0 0 / 3px 3px,
+    rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+}
+
+.gameplay-scene .heart-overlay {
+  z-index: 100;
+}
+
+.gameplay-scene .about-overlay {
+  z-index: 101;
+}
+
+.gameplay-scene .help-overlay {
+  z-index: 102;
+}
+
+.gameplay-scene .identities-overlay {
+  z-index: 103;
+}
+
+.heart-modal,
+.about-modal,
+.help-modal,
+.identities-modal {
+  line-height: 0;
+  max-width: calc(100% - 2 * var(--scene-modal-overlay-padding-pct) * 1cqw);
+}
+
+.heart-modal {
+  width: calc(var(--heart-modal-size-pct) * 1cqw);
+  transform: translateY(calc(var(--heart-modal-top-pct) * 1cqh / 100));
+}
+
+.about-modal {
+  width: calc(var(--about-modal-size-pct) * 1cqw);
+  transform: translateY(calc(var(--about-modal-top-pct) * 1cqh / 100));
+}
+
+.help-modal {
+  width: calc(var(--help-modal-size-pct) * 1cqw);
+  transform: translateY(calc(var(--help-modal-top-pct) * 1cqh / 100));
+}
+
+.identities-modal {
+  --u: calc(100cqw / var(--scene-art-w));
+  width: calc(var(--identities-modal-size-pct) * 1cqw);
+  max-height: calc(100% - 2 * var(--scene-modal-overlay-padding-pct) * 1cqh);
+  transform: translateY(calc(var(--identities-modal-top-pct) * 1cqh / 100));
+  box-sizing: border-box;
+  padding: calc(14 * var(--u));
+  background: var(--paper);
+  border: var(--border-thick);
+  box-shadow: 3px 3px 0 var(--line);
+  overflow: hidden;
+}
+
+.about-frame,
+.help-frame {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* ── Identities gallery (inside identities-modal) ── */
+
+.identities-panel {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: calc(14 * var(--u));
+  min-height: 0;
+  max-height: calc(85vh - 28 * var(--u));
+}
+
+.identities-preview {
+  flex: 1 1 58%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(8 * var(--u));
+}
+
+.identities-preview-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--identity-art-w) / var(--identity-art-h);
+  max-height: min(70vh, calc(var(--identities-modal-size-pct) * 0.58 * 1cqw * var(--identity-art-h) / var(--identity-art-w)));
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: #fff;
+  border: var(--border-thick);
+  box-shadow: 2px 2px 0 var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.identities-preview-empty {
+  margin: 0;
+  padding: calc(12 * var(--u));
+  font-family: var(--font-mono);
+  font-size: clamp(10px, calc(11 * var(--u)), 14px);
+  line-height: 1.35;
+  text-align: center;
+  color: var(--muted);
+  text-transform: lowercase;
+}
+
+.identities-preview-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.identities-preview-meta {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(8 * var(--u));
+  padding-top: calc(6 * var(--u));
+  font-family: var(--font-mono);
+  font-size: clamp(9px, calc(10 * var(--u)), 12px);
+  letter-spacing: 0.02em;
+}
+
+.identities-preview-number {
+  font-weight: 700;
+}
+
+.identities-gallery {
+  flex: 0 0 38%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.identities-gallery-empty {
+  margin: 0;
+  padding: calc(10 * var(--u));
+  font-family: var(--font-mono);
+  font-size: clamp(9px, calc(10 * var(--u)), 12px);
+  line-height: 1.4;
+  color: var(--muted);
+  border: 1px dashed var(--line);
+  background: #fff;
+}
+
+.identities-gallery-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 8px;
+  row-gap: calc(8 * var(--u));
+  align-content: start;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  max-height: min(70vh, 520px);
+  padding-right: calc(4 * var(--u));
+}
+
+.identity-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  margin: 0;
+  padding: calc(6 * var(--u));
+  border: var(--border-thick);
+  background: #fff;
+  box-shadow: 2px 2px 0 var(--line);
+  cursor: pointer;
+  text-align: center;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+.identity-thumb:hover:not(.is-selected) {
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.25));
+}
+
+.identity-thumb.is-selected {
+  background: var(--line);
+  border-color: var(--line);
+  box-shadow: 3px 3px 0 var(--line);
+  color: var(--paper);
+}
+
+.identity-thumb-frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--identity-art-w) / var(--identity-art-h);
+  padding: calc(4 * var(--u));
+  border: var(--border-thick);
+  background: #fff;
+  box-sizing: border-box;
+  line-height: 0;
+}
+
+.identity-thumb.is-selected .identity-thumb-frame {
+  background: var(--line);
+  border: none;
+  padding: calc(4 * var(--u));
+}
+
+.identity-thumb-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+}
+
+.identity-thumb-num {
+  display: block;
+  width: 100%;
+  margin-top: calc(5 * var(--u));
+  font-size: clamp(9px, calc(10 * var(--u)), 12px);
+  font-weight: 700;
+}
+
+/* ── Popup overlay (scoped to .gameplay-scene, not the full left column) ── */
+
+.gameplay-scene .overlay {
+  position: absolute;
+  inset: 0;
+  background: repeating-conic-gradient(#fff 0% 25%, transparent 0% 50%) 0 0 / 3px 3px,
+    rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  pointer-events: auto;
+  z-index: 100;
+}
+
+/*
+ * Popup scales with gameplay-scene width (2048 art px = 100% scene).
+ * --u is 1 design px; position stays centered via overlay flex.
+ */
+.popup {
+  position: relative;
+  --popup-scale: 2;
+  --u: calc(var(--popup-scale) * 100cqw / var(--art-w));
+  --popup-frame-top-shift: -43%;
+  --popup-frame-bottom-shift: 43%;
+  --popup-frame-top-left: -12%;
+  --popup-frame-bottom-left: -17%;
+  --popup-tag-size: 95;
+  --popup-tag-offset-x: -30;
+  --popup-tag-offset-y: -5;
+  --popup-btn-w: 90;
+  --popup-btn-offset-y: -30;
+  width: calc(240 * var(--u));
+  max-width: calc(100% - 24 * var(--u));
+  padding: calc(32 * var(--u)) calc(16 * var(--u));
+  background: #fff;
+  border-radius: 0;
+  border: calc(3 * var(--u)) solid #000;
+  overflow: visible;
+  box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 #000;
+  font-size: calc(12 * var(--u));
+}
+
+@supports not (width: 1cqw) {
+  .popup {
+    --u: calc(var(--popup-scale) * 100% / var(--art-w));
+  }
+}
+
+/* obj_frame_* PNGs: full popup width, sit above content for collage overlap */
+.popup-frame {
+  position: absolute;
+  left: 0;
+  width: 130%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.popup-frame--top {
+  top: 0;
+  left: var(--popup-frame-top-left);
+  transform: translateY(var(--popup-frame-top-shift));
+  transform-origin: bottom center;
+  object-position: bottom center;
+}
+
+.popup-frame--bottom {
+  bottom: 0;
+  left: var(--popup-frame-bottom-left);
+  transform: translateY(var(--popup-frame-bottom-shift));
+  transform-origin: top center;
+  object-position: top center;
+}
+
+/* Category tag — top-left collage overlap; scales with popup */
+.popup-category-tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  width: calc(var(--popup-tag-size) * var(--u));
+  height: auto;
+  display: block;
+  object-fit: contain;
+  object-position: top left;
+  pointer-events: none;
+  transform: translate(
+    calc(var(--popup-tag-offset-x) * var(--u)),
+    calc(var(--popup-tag-offset-y) * var(--u))
+  );
+  transform-origin: bottom right;
+}
+
+.popup-body {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: calc(10 * var(--u));
+  padding-bottom: calc(52 * var(--u));
+}
+
+/* Action buttons — fixed to popup bottom; scales with --u */
+.popup-actions {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  z-index: 4;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: calc(8 * var(--u));
+  width: 100%;
+  pointer-events: none;
+  transform: translate(-50%, calc(var(--popup-btn-offset-y) * var(--u)));
+}
+
+.pop-btn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  pointer-events: auto;
+  transition: transform 0.08s ease;
+}
+
+.pop-btn img {
+  display: block;
+  width: calc(var(--popup-btn-w) * var(--u));
+  height: auto;
+}
+
+.pop-btn:hover {
+  transform: scale(1.03);
+}
+
+.pop-btn:active {
+  transform: translate(calc(1 * var(--u)), calc(1 * var(--u))) scale(1.03);
+}
+
+.pop-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(8 * var(--u));
+  text-align: center;
+}
+
+.pop-thumb img {
+  width: calc(72 * var(--u));
+  height: calc(72 * var(--u));
+  object-fit: contain;
+  border-radius: 0;
+  border: calc(2 * var(--u)) solid #000;
+  background: #fff;
+  filter: grayscale(1) contrast(1.05);
+}
+
+.pop-thumb-lbl {
+  font-size: 1em;
+  font-weight: 700;
+  font-family: var(--font-serif, Georgia, serif);
+  color: #000;
+}
+
+.pop-desc {
+  font-size: calc(11 / 12 * 1em);
+  font-family: var(--font-serif, Georgia, serif);
+  color: #222;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.replace-label {
+  font-size: calc(9 / 12 * 1em);
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  color: #333;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.replace-list {
+  display: flex;
+  flex-direction: column;
+  gap: calc(5 * var(--u));
+}
+
+.replace-opt {
+  display: flex;
+  align-items: center;
+  gap: calc(8 * var(--u));
+  padding: calc(7 * var(--u)) calc(10 * var(--u));
+  border-radius: 0;
+  border: calc(2 * var(--u)) solid #000;
+  cursor: pointer;
+  background: #fff;
+  box-shadow: calc(2 * var(--u)) calc(2 * var(--u)) 0 #000;
+  transition: background 0.1s ease;
+}
+
+.replace-opt:hover {
+  background: #ecece8;
+}
+
+.r-thumb {
+  flex-shrink: 0;
+}
+
+.r-thumb img {
+  width: calc(40 * var(--u));
+  height: calc(40 * var(--u));
+  object-fit: contain;
+  border-radius: 0;
+  border: calc(1 * var(--u)) solid #000;
+  background: #fff;
+  display: block;
+  filter: grayscale(1);
+}
+
+.replace-opt .r-info {
+  flex: 1;
+}
+
+.replace-opt .r-name {
+  font-size: calc(11 / 12 * 1em);
+  font-weight: 600;
+  color: #000;
+}
+
+.replace-opt .r-slot {
+  font-size: calc(9 / 12 * 1em);
+  font-family: var(--font-mono, monospace);
+  color: #444;
+}
+
+.no-match {
+  font-size: calc(11 / 12 * 1em);
+  font-family: var(--font-serif, Georgia, serif);
+  color: #222;
+  text-align: center;
+  padding: calc(10 * var(--u));
+  border: calc(2 * var(--u)) dashed #000;
+  line-height: 1.5;
+  background: #fafaf8;
+}
+
+.no-match strong {
+  color: #000;
+}
+
+/* Hint inside gameplay layer */
+.hint-bar {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 9px;
+  font-family: var(--font-mono, monospace);
+  color: rgba(255, 255, 255, 0.55);
+  text-shadow: 0 0 2px #000, 0 0 4px #000;
+  pointer-events: none;
+  z-index: 40;
+}

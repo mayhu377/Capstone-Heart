@@ -1,0 +1,384 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blue Room</title>
+  <link rel="stylesheet" href="https://use.typekit.net/pha5hlu.css" />
+  <link rel="stylesheet" href="global.css" />
+  <link rel="stylesheet" href="typography.css" />
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+  <main>
+    <!-- LEFT PANEL: header + gameplay + dialogue -->
+    <div class="left" id="left">
+      <header class="menubar" role="banner">
+            <img
+              class="menubar-logo"
+              src="images/general/eye.gif"
+              width="30"
+              height="30"
+              alt=""
+              decoding="async"
+            />
+            <h2 class="menubar-item menubar-item--heart" id="menubar-heart" role="button" tabindex="0">HEART</h2>
+            <h2 class="menubar-item menubar-item--identities" id="menubar-identities" role="button" tabindex="0">IDENTITIES</h2>
+            <h2 class="menubar-item menubar-item--about" id="menubar-about" role="button" tabindex="0">ABOUT</h2>
+            <h2 class="menubar-item menubar-item--help" id="menubar-help" role="button" tabindex="0">HELP</h2>
+      </header>
+
+      <div class="left-play">
+        <div class="gameplay-viewport">
+          <div class="scene-host">
+            <div class="gameplay-scene">
+              <img
+                class="gameplay-scene-bg"
+                src="images/blue/room.png"
+                width="2048"
+                height="1244"
+                alt=""
+                decoding="async"
+              />
+
+              <div class="gameplay-scene-objects">
+                <div class="obj obj--body-obj1" id="obj-body-obj1" data-id="body-obj1" onclick="clickObj('body-obj1')">
+                  <img class="obj-img" src="images/blue/body-obj1.png" alt="" decoding="async" />
+                </div>
+                <div class="obj obj--body-obj2" id="obj-body-obj2" data-id="body-obj2" onclick="clickObj('body-obj2')">
+                  <img class="obj-img" src="images/blue/body-obj2.png" alt="" decoding="async" />
+                </div>
+                <div class="obj obj--head-obj1" id="obj-head-obj1" data-id="head-obj1" onclick="clickObj('head-obj1')">
+                  <img class="obj-img" src="images/blue/head-obj1.png" alt="" decoding="async" />
+                </div>
+                <div class="obj obj--head-obj2" id="obj-head-obj2" data-id="head-obj2" onclick="clickObj('head-obj2')">
+                  <img class="obj-img" src="images/blue/head-obj2.png" alt="" decoding="async" />
+                </div>
+                <div class="obj obj--limb-obj1" id="obj-limb-obj1" data-id="limb-obj1" onclick="clickObj('limb-obj1')">
+                  <img class="obj-img" src="images/blue/limb-obj1.png" alt="" decoding="async" />
+                </div>
+                <div class="obj obj--limb-obj2" id="obj-limb-obj2" data-id="limb-obj2" onclick="clickObj('limb-obj2')">
+                  <img class="obj-img" src="images/blue/limb-obj2.png" alt="" decoding="async" />
+                </div>
+                <div class="obj obj--limb-obj3" id="obj-limb-obj3" data-id="limb-obj3" onclick="clickObj('limb-obj3')">
+                  <img class="obj-img" src="images/blue/limb-obj3.png" alt="" decoding="async" />
+                </div>
+                <div class="obj obj--special-obj1" id="obj-special-obj1" data-id="special-obj1" onclick="clickObj('special-obj1')">
+                  <img class="obj-img" src="images/blue/special-obj1.png" alt="" decoding="async" />
+                </div>
+                <div class="obj obj--special-obj2" id="obj-special-obj2" data-id="special-obj2" onclick="clickObj('special-obj2')">
+                  <img class="obj-img" src="images/blue/special-obj2.png" alt="" decoding="async" />
+                </div>
+                <div class="obj obj--special-obj3" id="obj-special-obj3" data-id="special-obj3" onclick="clickObj('special-obj3')">
+                  <img class="obj-img" src="images/blue/special-obj3.png" alt="" decoding="async" />
+                </div>
+              </div>
+
+              <div class="gameplay-scene-NPC" aria-label="NPC interaction">
+                <div
+                  class="npc-click npc-click-target"
+                  id="npc-click"
+                  role="button"
+                  tabindex="0"
+                  aria-label="Talk to clerk"
+                >
+                  <img
+                    class="npc-click-img"
+                    src="images/blue/NPC_click.png"
+                    alt=""
+                    decoding="async"
+                  />
+                </div>
+              </div>
+
+              <div class="npc-portrait-layer" aria-hidden="true">
+                <div class="npc-portrait-anchor">
+                  <div class="npc-portrait" id="npc-portrait" hidden aria-hidden="true">
+                    <img
+                      class="npc-portrait-img"
+                      src="images/blue/blue_NPC.png"
+                      alt=""
+                      decoding="async"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="overlay" id="overlay" style="display:none" aria-hidden="true">
+                <div class="popup" id="popup">
+                  <img
+                    class="popup-frame popup-frame--top"
+                    src="images/general/obj_frame_top.png"
+                    alt=""
+                    decoding="async"
+                  />
+                  <img
+                    class="popup-category-tag"
+                    id="popup-category-tag"
+                    src=""
+                    alt=""
+                    decoding="async"
+                    hidden
+                  />
+                  <div class="popup-body" id="popup-body"></div>
+                  <div class="popup-actions" id="popup-actions" aria-label="Popup actions">
+                    <button type="button" class="pop-btn" id="pop-btn-primary" hidden>
+                      <img id="pop-btn-primary-img" src="" alt="" decoding="async" />
+                    </button>
+                    <button type="button" class="pop-btn" id="pop-btn-secondary" hidden>
+                      <img src="images/general/cancel.png" alt="Cancel" decoding="async" />
+                    </button>
+                  </div>
+                  <img
+                    class="popup-frame popup-frame--bottom"
+                    src="images/general/obj_frame_bottom.png"
+                    alt=""
+                    decoding="async"
+                  />
+                </div>
+              </div>
+
+              <div class="heart-overlay" id="heart-overlay" hidden style="display:none" aria-hidden="true">
+                <div class="heart-modal" id="heart-modal">
+                  <div class="heart-panel" id="heart-panel">
+                    <img
+                      class="heart-panel-bg heart-panel-bg--close"
+                      src="images/general/heart_close.png"
+                      alt=""
+                      decoding="async"
+                    />
+                    <img
+                      class="heart-panel-bg heart-panel-bg--open"
+                      src="images/general/heart_open.png"
+                      alt=""
+                      decoding="async"
+                    />
+                    <button type="button" class="heart-dagger" id="heart-dagger" aria-label="Toggle heart panel">
+                      <img
+                        class="heart-dagger-img heart-dagger-img--close"
+                        src="images/general/dagger_close.png"
+                        alt=""
+                        decoding="async"
+                      />
+                      <img
+                        class="heart-dagger-img heart-dagger-img--open"
+                        src="images/general/dagger_open.png"
+                        alt=""
+                        decoding="async"
+                      />
+                    </button>
+                    <div class="heart-pins" id="heart-pins" aria-hidden="true">
+                      <img class="heart-pin heart-pin--blue" src="images/general/pin.png" alt="" decoding="async" />
+                      <img class="heart-pin heart-pin--yellow" src="images/general/pin.png" alt="" decoding="async" />
+                      <img class="heart-pin heart-pin--green" src="images/general/pin.png" alt="" decoding="async" />
+                      <img class="heart-pin heart-pin--red" src="images/general/pin.png" alt="" decoding="async" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="about-overlay" id="about-overlay" hidden style="display:none" aria-hidden="true">
+                <div class="about-modal" id="about-modal">
+                  <img
+                    class="about-frame"
+                    src="images/general/about_frame.png"
+                    alt="About"
+                    decoding="async"
+                  />
+                </div>
+              </div>
+
+              <div class="help-overlay" id="help-overlay" hidden style="display:none" aria-hidden="true">
+                <div class="help-modal" id="help-modal">
+                  <img
+                    class="help-frame"
+                    src="images/general/help_frame.png"
+                    alt="Help"
+                    decoding="async"
+                  />
+                </div>
+              </div>
+
+              <div class="identities-overlay" id="identities-overlay" hidden style="display:none" aria-hidden="true">
+                <div class="identities-modal" id="identities-modal">
+                  <div class="identities-panel">
+                    <section class="identities-preview" aria-label="Identity preview">
+                      <div class="identities-preview-stage" id="identities-preview-stage">
+                        <p class="identities-preview-empty" id="identities-preview-empty">
+                          choose one identity to view
+                        </p>
+                        <img
+                          class="identities-preview-img"
+                          id="identities-preview-img"
+                          src=""
+                          alt=""
+                          decoding="async"
+                          hidden
+                        />
+                      </div>
+                      <div class="identities-preview-meta" id="identities-preview-meta" hidden>
+                        <span class="identities-preview-date" id="identities-preview-date"></span>
+                        <span class="identities-preview-number" id="identities-preview-number"></span>
+                      </div>
+                    </section>
+                    <section class="identities-gallery" aria-label="Saved identities">
+                      <p class="identities-gallery-empty" id="identities-gallery-empty" hidden>
+                        No saved identities yet.
+                      </p>
+                      <div class="identities-gallery-list" id="identities-gallery-list" role="list"></div>
+                    </section>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="left-dialogue" aria-label="Dialogue">
+          <img
+            class="dialogue-img"
+            src="images/general/dialogue.png"
+            alt=""
+            decoding="async"
+          />
+          <div class="dialogue-content">
+            <h1 class="dialogue-title">Movie Theater</h1>
+            <div class="dialogue-body">
+              <p>It seems the fish clerk is not here yet. Play around with the space for a little bit.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: collage stage (tune layers in index.css → .rpanel-layer--*) -->
+    <div class="right" id="right">
+      <div class="rpanel-stage">
+        <div class="rpanel rpanel-identity rpanel-layer--identity">
+          <img
+            class="rpanel-bg rpanel-layer--identity-bg"
+            src="images/general/identity_bg.png"
+            alt=""
+            decoding="async"
+          />
+          <img
+            class="rpanel-frame rpanel-layer--identity-frame"
+            src="images/general/identity_frame.png"
+            alt=""
+            decoding="async"
+          />
+          <div class="builder rpanel-layer--builder" id="builder"></div>
+          <h1 class="rpanel-identity-title">identity builder</h1>
+        </div>
+
+        <div class="rpanel rpanel-tool rpanel-layer--tools">
+          <ul class="tool-list" role="toolbar" aria-label="Identity tools">
+          <li>
+            <button type="button" class="tool-btn has-ui-hint" id="tool-flip-h" aria-label="Flip horizontal">
+              <img class="tool-btn-icon" src="images/general/flip_h.png" alt="" decoding="async" />
+              <img class="ui-hint" src="images/general/hint_flip_h.png" alt="" decoding="async" aria-hidden="true" />
+            </button>
+          </li>
+          <li>
+            <button type="button" class="tool-btn has-ui-hint" id="tool-flip-v" aria-label="Flip vertical">
+              <img class="tool-btn-icon" src="images/general/flip_v.png" alt="" decoding="async" />
+              <img class="ui-hint" src="images/general/hint_flip_v.png" alt="" decoding="async" aria-hidden="true" />
+            </button>
+          </li>
+          <li>
+            <button type="button" class="tool-btn has-ui-hint" id="tool-rotate" aria-label="Rotate">
+              <img class="tool-btn-icon" src="images/general/rotate.png" alt="" decoding="async" />
+              <img class="ui-hint" src="images/general/hint_rotate.png" alt="" decoding="async" aria-hidden="true" />
+            </button>
+          </li>
+          <li>
+            <button type="button" class="tool-btn has-ui-hint" id="tool-resize" aria-label="Resize">
+              <img class="tool-btn-icon" src="images/general/resize.png" alt="" decoding="async" />
+              <img class="ui-hint" src="images/general/hint_resize.png" alt="" decoding="async" aria-hidden="true" />
+            </button>
+          </li>
+          <li>
+            <button type="button" class="tool-btn has-ui-hint" id="tool-save" aria-label="Save">
+              <img class="tool-btn-icon" src="images/general/save.png" alt="" decoding="async" />
+              <img class="ui-hint" src="images/general/hint_save.png" alt="" decoding="async" aria-hidden="true" />
+            </button>
+          </li>
+          <li>
+            <button type="button" class="tool-btn tool-btn--proceed" id="proceed-btn" disabled aria-label="Proceed">
+              <img class="tool-btn-icon" id="proceed-img" src="images/general/proceed_lock.png" alt="" decoding="async" />
+            </button>
+          </li>
+        </ul>
+        </div>
+
+        <div class="rpanel rpanel-progress rpanel-layer--progress">
+          <img
+            class="rpanel-progress-bar"
+            src="images/general/progress_bar.png"
+            alt=""
+            decoding="async"
+          />
+          <div class="rpanel-progress-fill" aria-hidden="true">
+            <img
+              class="rpanel-layer-progress"
+              src="images/general/progress.png"
+              alt=""
+              decoding="async"
+            />
+          </div>
+          <h2 class="progress-number" id="progress-number">0</h2>
+          <h2 class="progress-sum" id="progress-sum">6</h2>
+        </div>
+
+        <div class="rpanel rpanel-layer--pieces">
+          <div class="pieces-board">
+            <img
+              class="pieces-bg"
+              src="images/general/pieces.png"
+              alt=""
+              decoding="async"
+            />
+            <div class="pieces-slots" id="pieces-slots" aria-label="Collected pieces">
+              <button type="button" class="piece-slot has-ui-hint is-empty" data-slot="0" data-label="Body" aria-label="Body piece slot">
+                <img class="piece-slot-frame" src="images/general/obj_blue.png" alt="" decoding="async" />
+                <img class="piece-slot-thumb" src="" alt="" decoding="async" hidden />
+                <img class="ui-hint" src="images/general/hint_return.png" alt="" decoding="async" aria-hidden="true" />
+              </button>
+              <button type="button" class="piece-slot has-ui-hint is-empty" data-slot="1" data-label="Head" aria-label="Head piece slot">
+                <img class="piece-slot-frame" src="images/general/obj_blue.png" alt="" decoding="async" />
+                <img class="piece-slot-thumb" src="" alt="" decoding="async" hidden />
+                <img class="ui-hint" src="images/general/hint_return.png" alt="" decoding="async" aria-hidden="true" />
+              </button>
+              <button type="button" class="piece-slot has-ui-hint is-empty" data-slot="2" data-label="Limb 1" aria-label="Limb 1 piece slot">
+                <img class="piece-slot-frame" src="images/general/obj_blue.png" alt="" decoding="async" />
+                <img class="piece-slot-thumb" src="" alt="" decoding="async" hidden />
+                <img class="ui-hint" src="images/general/hint_return.png" alt="" decoding="async" aria-hidden="true" />
+              </button>
+              <button type="button" class="piece-slot has-ui-hint is-empty" data-slot="3" data-label="Limb 2" aria-label="Limb 2 piece slot">
+                <img class="piece-slot-frame" src="images/general/obj_blue.png" alt="" decoding="async" />
+                <img class="piece-slot-thumb" src="" alt="" decoding="async" hidden />
+                <img class="ui-hint" src="images/general/hint_return.png" alt="" decoding="async" aria-hidden="true" />
+              </button>
+              <button type="button" class="piece-slot has-ui-hint is-empty" data-slot="4" data-label="Special 1" aria-label="Special 1 piece slot">
+                <img class="piece-slot-frame" src="images/general/obj_blue.png" alt="" decoding="async" />
+                <img class="piece-slot-thumb" src="" alt="" decoding="async" hidden />
+                <img class="ui-hint" src="images/general/hint_return.png" alt="" decoding="async" aria-hidden="true" />
+              </button>
+              <button type="button" class="piece-slot has-ui-hint is-empty" data-slot="5" data-label="Special 2" aria-label="Special 2 piece slot">
+                <img class="piece-slot-frame" src="images/general/obj_blue.png" alt="" decoding="async" />
+                <img class="piece-slot-thumb" src="" alt="" decoding="async" hidden />
+                <img class="ui-hint" src="images/general/hint_return.png" alt="" decoding="async" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div class="color-filter" aria-hidden="true"></div>
+  <script src="script.js"></script>
+</body>
+</html>
