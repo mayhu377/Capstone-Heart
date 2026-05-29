@@ -83,7 +83,7 @@
                   aria-label="Talk to clerk"
                 >
                   <img
-                    class="npc-click-img"
+                    class="npc-click-img" 
                     src="images/blue/NPC_click.png"
                     alt=""
                     decoding="async"
@@ -234,18 +234,39 @@
           </div>
         </div>
 
-        <div class="left-dialogue" aria-label="Dialogue">
+        <div class="left-dialogue" id="left-dialogue" aria-label="Dialogue">
           <img
             class="dialogue-img"
             src="images/general/dialogue.png"
             alt=""
             decoding="async"
           />
-          <div class="dialogue-content">
-            <h1 class="dialogue-title">Movie Theater</h1>
-            <div class="dialogue-body">
-              <p>It seems the fish clerk is not here yet. Play around with the space for a little bit.</p>
+          <div class="dialogue-content" id="dialogue-content">
+            <h1 class="dialogue-title" id="dialogue-title">Movie Theater</h1>
+            <div class="dialogue-body" id="dialogue-body">
+              <p id="dialogue-text"></p>
             </div>
+            <div
+              class="dialogue-options"
+              id="dialogue-options"
+              role="group"
+              aria-label="Dialogue choices" 
+              hidden
+            ></div>
+            <button
+              type="button"
+              class="dialogue-advance"
+              id="dialogue-advance"
+              aria-label="Next line"
+              hidden
+            >
+              <img
+                class="dialogue-advance-img"
+                src="images/general/arrow.png"
+                alt=""
+                decoding="async"
+              />
+            </button>
           </div>
         </div>
       </div>
@@ -269,7 +290,6 @@
             decoding="async"
           />
           <div class="builder rpanel-layer--builder" id="builder"></div>
-          <h1 class="rpanel-identity-title">identity builder</h1>
         </div>
 
         <div class="rpanel rpanel-tool rpanel-layer--tools">
@@ -379,6 +399,9 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div class="color-filter" aria-hidden="true"></div>
-  <script src="script.js"></script>
+  <script src="gameObjects.js"></script>
+  <script src="dialogueContent.js"></script>
+  <script src="dialogue.js"></script>
+  <script src="script.js?v=3"></script>
 </body>
 </html>

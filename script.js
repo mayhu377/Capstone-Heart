@@ -36,79 +36,8 @@ function popupObjectTitle(category) {
   return CATEGORY_LABEL[category] || category;
 }
 
-/** Object id → metadata. Filenames: images/blue/{id}.png */
-const DATA = {
-  'body-obj1': {
-    img: 'images/blue/body-obj1.png',
-    name: 'Body — piece 1',
-    desc: 'A fragment for the core of your figure.',
-    category: 'body',
-    builderSize: 180,
-  },
-  'body-obj2': {
-    img: 'images/blue/body-obj2.png',
-    name: 'Body — piece 2',
-    desc: 'An alternate core — choose which body you keep.',
-    category: 'body',
-    builderSize: 250,
-  },
-  'head-obj1': {
-    img: 'images/blue/head-obj1.png',
-    name: 'Head — piece 1',
-    desc: 'Something to think with.',
-    category: 'head',
-    builderSize: 150,
-  },
-  'head-obj2': {
-    img: 'images/blue/head-obj2.png',
-    name: 'Head — piece 2',
-    desc: 'Another vantage — only one head stays.',
-    category: 'head',
-    builderSize: 120,
-  },
-  'limb-obj1': {
-    img: 'images/blue/limb-obj1.png',
-    name: 'Limb — piece 1',
-    desc: 'Reach or balance — you can hold two limbs.',
-    category: 'limb',
-    builderSize: 130,
-  },
-  'limb-obj2': {
-    img: 'images/blue/limb-obj2.png',
-    name: 'Limb — piece 2',
-    desc: 'A second reach — or swap it later.',
-    category: 'limb',
-    builderSize: 160,
-  },
-  'limb-obj3': {
-    img: 'images/blue/limb-obj3.png',
-    name: 'Limb — piece 3',
-    desc: 'A third option — replaces one of your two limbs.',
-    category: 'limb',
-    builderSize: 100,
-  },
-  'special-obj1': {
-    img: 'images/blue/special-obj1.png',
-    name: 'Special — piece 1',
-    desc: 'Something extra — up to two specials.',
-    category: 'special',
-    builderSize: 130,
-  },
-  'special-obj2': {
-    img: 'images/blue/special-obj2.png',
-    name: 'Special — piece 2',
-    desc: 'Another accent — or trade it in.',
-    category: 'special',
-    builderSize: 90,
-  },
-  'special-obj3': {
-    img: 'images/blue/special-obj3.png',
-    name: 'Special — piece 3',
-    desc: 'A third flair — replaces one special slot.',
-    category: 'special',
-    builderSize: 130,
-  },
-};
+/** Object registry — see gameObjects.js */
+const DATA = window.GameObjects.byId;
 
 /** Pill rows: label + category + slot index for multi-cap categories */
 const PILL_ROWS = [
@@ -418,6 +347,8 @@ function initPieceSlots() {
 }
 
 function clickObj(id) {
+  if (window.DialogueSystem?.isInConversation?.()) return;
+
   const d = DATA[id];
   if (!d) return;
 
@@ -489,7 +420,7 @@ function showAcceptPopup(id) {
   setPopupActions('accept', () => acceptObj(id));
   $('overlay').style.display = 'flex';
   $('popup-body').innerHTML = `
-    ${popThumb(d.img, popupObjectTitle(d.category))}
+    ${popThumb(d.img, d.name)}
     <div class="pop-desc">${d.desc}</div>`;
 }
 
@@ -500,14 +431,14 @@ function showReplacePopup(newId, oldId) {
   setPopupActions('replace', () => doReplace(newId, oldId));
   $('overlay').style.display = 'flex';
   $('popup-body').innerHTML = `
-    ${popThumb(nd.img, popupObjectTitle(nd.category))}
+    ${popThumb(nd.img, nd.name)}
     <div class="pop-desc">${nd.desc}</div>
     <div class="replace-label">Replaces your current ${popupObjectTitle(nd.category)}:</div>
     <div class="replace-list">
       <div class="replace-opt" role="button" tabindex="0" onclick="doReplace('${newId}','${oldId}')">
         <span class="r-thumb"><img src="${od.img}" alt="" /></span>
         <div class="r-info">
-          <div class="r-name">${popupObjectTitle(od.category)}</div>
+          <div class="r-name">${od.name}</div>
           <div class="r-slot">${popupObjectTitle(od.category)}</div>
         </div>
       </div>
@@ -526,7 +457,7 @@ function showReplaceChoicePopup(newId, oldIds) {
       <div class="replace-opt" role="button" tabindex="0" onclick="doReplace('${newId}','${oid}')">
         <span class="r-thumb"><img src="${od.img}" alt="" /></span>
         <div class="r-info">
-          <div class="r-name">${popupObjectTitle(od.category)}</div>
+          <div class="r-name">${od.name}</div>
           <div class="r-slot">${popupObjectTitle(od.category)}</div>
         </div>
       </div>`;
@@ -534,7 +465,7 @@ function showReplaceChoicePopup(newId, oldIds) {
     .join('');
 
   $('popup-body').innerHTML = `
-    ${popThumb(nd.img, popupObjectTitle(nd.category))}
+    ${popThumb(nd.img, nd.name)}
     <div class="pop-desc">${nd.desc}</div>
     <div class="replace-label">Which ${nd.category} do you want to replace?</div>
     <div class="replace-list">${opts}</div>`;
@@ -1059,23 +990,20 @@ function initHelpModal() {
   });
 }
 
-/* ── Saved identities (Identities/ folder + gallery metadata) ── */
+/* ── Saved identities (gallery in browser localStorage only) ── */
 
 const IDENTITIES_STORAGE_KEY = 'blue-room-identities';
-const IDENTITIES_FOLDER = 'Identities';
-const IDENTITY_EXPORT_SCALE = 2;
+/** Bump to wipe stale gallery data in localStorage on next page load. */
+const IDENTITIES_GALLERY_SCHEMA = 2;
+/** Match --identity-art-w in global.css; export targets this width in px */
+const IDENTITY_ART_W = 2018;
+const IDENTITY_EXPORT_MIN_SCALE = 2;
+const IDENTITY_THUMB_MAX_DIM = 320;
 
 let selectedIdentityViewId = null;
 let setIdentitiesVisible = null;
 
-function identityFileName(number) {
-  return `identity-${number}.png`;
-}
-
 function identityImageSrc(entry) {
-  if (entry?.fileName && entry.fileSaved !== false) {
-    return `${IDENTITIES_FOLDER}/${entry.fileName}`;
-  }
   return entry?.thumbDataUrl || '';
 }
 
@@ -1094,30 +1022,36 @@ function persistIdentities(list) {
   localStorage.setItem(IDENTITIES_STORAGE_KEY, JSON.stringify(list));
 }
 
-function canvasToBlob(canvas, type, quality) {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error('blob failed'))),
-      type,
-      quality
-    );
-  });
+function clearSavedIdentities() {
+  localStorage.removeItem(IDENTITIES_STORAGE_KEY);
+  selectedIdentityViewId = null;
+  renderIdentitiesGallery();
 }
 
-/** Save PNG into project Identities/ via local dev server (npm start). */
-async function writeIdentityPngToFolder(blob, fileName) {
-  const res = await fetch(
-    `/api/identities/save?file=${encodeURIComponent(fileName)}`,
-    {
-      method: 'POST',
-      body: blob,
-      headers: { 'Content-Type': 'image/png' },
-    }
-  );
-  if (!res.ok) throw new Error('save-failed');
+function migrateIdentitiesGalleryStorage() {
+  const schemaKey = `${IDENTITIES_STORAGE_KEY}-schema`;
+  if (localStorage.getItem(schemaKey) === String(IDENTITIES_GALLERY_SCHEMA)) return;
+  localStorage.removeItem(IDENTITIES_STORAGE_KEY);
+  localStorage.setItem(schemaKey, String(IDENTITIES_GALLERY_SCHEMA));
+  selectedIdentityViewId = null;
 }
 
-function createThumbnailDataUrl(canvas, maxDim = 200) {
+function maybeClearIdentitiesFromUrl() {
+  if (new URLSearchParams(location.search).get('clearIdentities') === '1') {
+    localStorage.removeItem(`${IDENTITIES_STORAGE_KEY}-schema`);
+    migrateIdentitiesGalleryStorage();
+    clearSavedIdentities();
+    history.replaceState({}, '', location.pathname);
+    toast('All saved identities cleared');
+  }
+}
+
+function identityExportScale(builderWidth) {
+  if (!builderWidth) return IDENTITY_EXPORT_MIN_SCALE;
+  return Math.max(IDENTITY_EXPORT_MIN_SCALE, IDENTITY_ART_W / builderWidth);
+}
+
+function createThumbnailDataUrl(canvas, maxDim = IDENTITY_THUMB_MAX_DIM) {
   const w = canvas.width;
   const h = canvas.height;
   const scale = Math.min(1, maxDim / Math.max(w, h, 1));
@@ -1130,16 +1064,14 @@ function createThumbnailDataUrl(canvas, maxDim = 200) {
   return thumb.toDataURL('image/png');
 }
 
-function addSavedIdentity(fileName, thumbDataUrl, fileSaved = true) {
+function addSavedIdentity(thumbDataUrl) {
   const list = loadIdentities();
   const number = list.length + 1;
   const entry = {
     id: `identity-${Date.now()}-${number}`,
     number,
     savedAt: new Date().toISOString(),
-    fileName,
     thumbDataUrl: thumbDataUrl || null,
-    fileSaved: Boolean(fileSaved),
   };
   list.push(entry);
   persistIdentities(list);
@@ -1199,6 +1131,8 @@ async function drawPlacedOnCanvas(ctx, el) {
   const h = el.offsetHeight;
 
   ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.translate(x + w / 2, y + h / 2);
   ctx.rotate((t.rotate * Math.PI) / 180);
   const sx = t.flipH ? -1 : 1;
@@ -1214,11 +1148,13 @@ async function captureBuilderCollage(builder) {
   const h = builder.clientHeight;
   if (!w || !h) throw new Error('empty builder');
 
-  const scale = IDENTITY_EXPORT_SCALE;
+  const scale = identityExportScale(w);
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(w * scale);
   canvas.height = Math.round(h * scale);
   const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.scale(scale, scale);
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, w, h);
@@ -1228,16 +1164,6 @@ async function captureBuilderCollage(builder) {
   }
 
   return canvas;
-}
-
-function downloadDataUrl(dataUrl, filename) {
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = filename;
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
 }
 
 async function saveIdentityCollage() {
@@ -1257,26 +1183,9 @@ async function saveIdentityCollage() {
 
   try {
     const canvas = await captureBuilderCollage(builder);
-    const number = loadIdentities().length + 1;
-    const fileName = identityFileName(number);
-    const blob = await canvasToBlob(canvas, 'image/png');
     const thumbDataUrl = createThumbnailDataUrl(canvas);
-
-    let fileSaved = false;
-    try {
-      await writeIdentityPngToFolder(blob, fileName);
-      fileSaved = true;
-    } catch {
-      toast('Start the app with npm start, then open http://localhost:8080');
-    }
-
-    const entry = addSavedIdentity(fileName, thumbDataUrl, fileSaved);
-    if (fileSaved) {
-      toast(`Identity #${entry.number} saved to ${IDENTITIES_FOLDER}/${fileName}`);
-    } else {
-      toast(`Identity #${entry.number} added to Identities gallery`);
-    }
-
+    const entry = addSavedIdentity(thumbDataUrl);
+    toast(`Identity #${entry.number} saved to gallery`);
     renderIdentitiesGallery();
   } finally {
     extendBuilderSaveLock();
@@ -1305,7 +1214,7 @@ function renderIdentitiesPreview(entry) {
   }
   if (meta) meta.hidden = false;
   if (dateEl) dateEl.textContent = formatIdentityDate(entry.savedAt);
-  if (numEl) numEl.textContent = `#${entry.number}`;
+  if (numEl) numEl.textContent = `Identity #${entry.number}`;
 }
 
 function selectIdentityView(id) {
@@ -1455,39 +1364,18 @@ function initNpcPortraitAnchorSync() {
   window.addEventListener('resize', run);
 }
 
-function initNpcInteraction() {
-  const clickBtn = $('npc-click');
-  const portrait = $('npc-portrait');
-  if (!clickBtn || !portrait) return;
+window.GameState = {
+  getPieceSlots: () => pieceSlots,
+  getIdentity: () => identity,
+  getTotalCount: () => totalCount(),
+  getObjectData: (id) => DATA[id],
+};
 
-  let npcRevealed = false;
-
-  function revealNpc() {
-    if (npcRevealed) return;
-    npcRevealed = true;
-    syncNpcPortraitToDialogue();
-    portrait.hidden = false;
-    portrait.setAttribute('aria-hidden', 'false');
-  }
-
-  clickBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    revealNpc();
-  });
-
-  clickBtn.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      e.stopPropagation();
-      revealNpc();
-    }
-  });
-}
+window.syncNpcPortraitToDialogue = syncNpcPortraitToDialogue;
+window.clearSavedIdentities = clearSavedIdentities;
 
 renderPills();
 initNpcPortraitAnchorSync();
-initNpcInteraction();
 initToolStrip();
 initIdentityTools();
 initPieceSlots();
@@ -1496,6 +1384,8 @@ initHeartModal();
 initAboutModal();
 initHelpModal();
 initIdentitiesModal();
+migrateIdentitiesGalleryStorage();
+maybeClearIdentitiesFromUrl();
 renderIdentitiesGallery();
 window.addEventListener('resize', sizeToolStrip);
 

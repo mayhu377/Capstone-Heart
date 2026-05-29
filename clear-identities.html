@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clear identity gallery — Blue Room</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 28rem;
+      margin: 3rem auto;
+      padding: 0 1.25rem;
+      line-height: 1.5;
+    }
+    .ok { color: #067a06; }
+    a { color: #004ec4; }
+  </style>
+</head>
+<body>
+  <h1>Clear identity gallery</h1>
+  <p id="msg">Clearing saved identities…</p>
+  <script>
+    /* Keys must match script.js (IDENTITIES_STORAGE_KEY + schema). */
+    const KEYS = ['blue-room-identities', 'blue-room-identities-schema'];
+    KEYS.forEach((key) => localStorage.removeItem(key));
+    document.getElementById('msg').innerHTML =
+      '<span class="ok">Done.</span> All identity thumbnails removed from this browser.<br><br>' +
+      '<a href="index.html">Back to Blue Room</a> — refresh if it was already open.';
+  </script>
+</body>
+</html>

@@ -14,29 +14,24 @@
   --bevel-light: #ffffff;
   --bevel-dark: #000000;
   --shell-padding: 10px;
-  /* Fixed right column (px); left fills remainder until layout lock */
-  --right-panel-w: 424px; /*CHANGE*/
-  --layout-lock-w: 1400px;
-  --left-min-w: calc(var(--layout-lock-w) - var(--right-panel-w));
-  /* Hover hint art — width only; height follows hint image ratio (~217px tall in source) */
-  --ui-hint-w: 200px;
-  /* Gap between hint and control (tools + piece slots) */
-  --ui-hint-gap: 2px;
-  /* Above left panel, identity collage layers, and toasts */
-  --ui-hint-z: 10000;
-  --color-filter: #172b54;
-  --color-filter-opacity: 1;
-  --color-filter-z: 10001;
   --left-panel-z: 1;
   --right-panel-z: 2;
   --identity-art-w: 2018;
   --identity-art-h: 2900;
+  /* Fixed right column (px); left fills remainder until layout lock */
+  --right-panel-w: 424px; /*CHANGE*/
+  --layout-lock-w: 1400px;
+  --left-min-w: calc(var(--layout-lock-w) - var(--right-panel-w));
+  /* Hover hint UI values*/
+  --ui-hint-w: 200px;
+  --ui-hint-gap: 2px;
+  --ui-hint-z: 10000;
+  /* Full-screen blue filter*/
+  --color-filter: #172b54;
+  --color-filter-opacity: 1;
+  --color-filter-z: 10001;
 
-  /*
-   * Scene modals (Heart, About, Help, Identities) — width as % of gameplay-scene width.
-   * Scene art is 2048px wide (--scene-art-w on .gameplay-scene). Height follows image ratio.
-   * Vertical position: 0 = centered in scene; positive top-pct = nudge down from center.
-   */
+  /* Scene modals (Heart, About, Help, Identities)*/
   --scene-art-w: 2048;
   --heart-modal-size-pct: 23.4;
   --about-modal-size-pct: 58.6;
@@ -45,7 +40,7 @@
   --heart-modal-top-pct: -300;
   --about-modal-top-pct: -300;
   --help-modal-top-pct: -300;
-  --identities-modal-top-pct: -500; /*CHANGE*/
+  --identities-modal-top-pct: -530; /*CHANGE*/
   --scene-modal-overlay-padding-pct: 0.78;
 }
 
@@ -72,7 +67,7 @@ body {
   background: #000;
 }
 
-/* Full-screen blue grade — topmost layer; tune strength via --color-filter-opacity */
+/* Full-screen blue filter*/
 .color-filter {
   position: fixed;
   inset: 0;
@@ -99,7 +94,7 @@ main {
   box-shadow: none;
 }
 
-/* Left column: header + gameplay + dialogue (vertical stack) */
+/* Left column: header + gameplay + dialogue*/
 .left {
   position: relative;
   z-index: var(--left-panel-z);
@@ -118,7 +113,6 @@ main {
   flex: 0 0 31px;
 }
 
-/* Fills below header; dialogue is an absolute layer on top (like identity-frame) */
 .left-play {
   position: relative;
   flex: 1 1 0;
@@ -131,28 +125,35 @@ main {
   --lp-dialogue-max-height: 38%;
   --lp-dialogue-bottom: 0;
   --lp-dialogue-z: 4;
-  /*
-   * blue_NPC — % of the dialogue box (.left-dialogue; anchor synced in script.js).
-   * Layer z-index: above scene objects, below overlays/modals (see --npc-portrait-z).
-   */
+  /*blue_NPC values*/
   --npc-portrait-left: -8%;
   --npc-portrait-bottom: -80%;
-  --npc-portrait-width: 45%;
+  --npc-portrait-width: 45%; /*CHANGE*/
   --npc-portrait-shadow: 2px 2px 3px rgba(0, 0, 0, 0.45);
-  /*
-   * Text on dialogue image (% of overlay box; does not affect dialogue-img).
-   * --dlg-title-* = Movie Theater. --dlg-body-* = paragraph.
-   */
+  /*Dialogue title values*/
   --dlg-title-left: 6%;
   --dlg-title-top: 15%;
   --dlg-title-width: 43%;
   --dlg-title-size: 24;
+  /* Dialogue text values*/
   --dlg-body-left: 6%;
-  --dlg-body-top: 38%;
-  --dlg-body-width: 77%;
+  --dlg-body-top: 55%;
+  --dlg-body-width: 90%;
   --dlg-body-size: 14;
-  /* For responsive type scale only (match dialogue.png width in px) */
   --dlg-art-w: 1200;
+  /* Dialogue options (A/B/C) — scale with dialogue box via cqi (same as --dlg-body-size) */
+  --dlg-options-left: 0;
+  --dlg-options-top: 17%;
+  --dlg-options-width: 100%;
+  --dlg-options-height: 100%;
+  --dlg-options-justify: center;
+  --dlg-options-align: center;
+  --dlg-option-img-size: 80;
+  --dlg-option-gap-size: 60;
+  --dlg-option-max-w-pct: 28;
+  --dlg-advance-img-size: 28;
+  --dlg-advance-right: 5%;
+  --dlg-advance-bottom: 12%;
 }
 
 .left-dialogue {
@@ -170,7 +171,6 @@ main {
   pointer-events: none;
 }
 
-/* Gameplay viewport: full play area (scene visible under dialogue art) */
 .gameplay-viewport {
   position: relative;
   display: flex;
@@ -1049,15 +1049,137 @@ main {
 
 .dialogue-body {
   position: absolute;
-  left: 6%;
-  top: 55%;
-  width: 77%;
+  left: var(--dlg-body-left);
+  top: var(--dlg-body-top);
+  /* Max line width for #dialogue-text — raise (e.g. 88%) for fewer wraps */
+  width: var(--dlg-body-width);
+  max-width: calc(100% - var(--dlg-body-left));
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   text-align: left;
   background: transparent;
   pointer-events: none;
+}
+
+.dialogue-body p {
+  margin: 0;
+  max-width: 100%;
+}
+
+/* Clickable during NPC lines / options */
+.left-dialogue--interactive {
+  pointer-events: auto;
+}
+
+.left-dialogue--interactive.left-dialogue--lines {
+  cursor: pointer;
+}
+
+.left-dialogue--interactive .dialogue-img {
+  pointer-events: none;
+}
+
+.left-dialogue--interactive .dialogue-content--interactive {
+  pointer-events: auto;
+}
+
+.left-dialogue--lines .dialogue-content--interactive {
+  cursor: pointer;
+}
+
+.left-dialogue--interactive .dialogue-title {
+  pointer-events: none;
+}
+
+.left-dialogue--options .dialogue-content--interactive {
+  cursor: default;
+}
+
+.dialogue-content--interactive .dialogue-options {
+  pointer-events: auto;
+}
+
+.dialogue-options {
+  position: absolute;
+  left: var(--dlg-options-left);
+  top: var(--dlg-options-top);
+  width: var(--dlg-options-width);
+  height: var(--dlg-options-height);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: var(--dlg-options-align);
+  justify-content: var(--dlg-options-justify);
+  gap: calc(var(--dlg-option-gap-size) / var(--dlg-art-w) * 100%);
+  box-sizing: border-box;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.dialogue-options:not([hidden]) {
+  display: flex !important;
+  visibility: visible;
+  z-index: 3;
+}
+
+.dialogue-option {
+  display: block;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  line-height: normal;
+  font-size: 16px;
+  cursor: pointer;
+  transition: opacity 0.5s ease;
+}
+
+.dialogue-option-img {
+  display: block;
+  width: auto;
+  height: calc(var(--dlg-option-img-size) / var(--dlg-art-w) * 100%);
+  max-width: calc(var(--dlg-option-max-w-pct) * 1%);
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.dialogue-option:hover {
+  opacity: 0.7; 
+}
+
+.dialogue-advance {
+  position: absolute;
+  right: var(--dlg-advance-right);
+  bottom: var(--dlg-advance-bottom);
+  z-index: 5;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  line-height: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.08s ease, filter 0.1s ease;
+}
+
+.dialogue-advance-img {
+  display: block;
+  width: auto;
+  height: calc(var(--dlg-advance-img-size) / var(--dlg-art-w) * 100%);
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.dialogue-advance[hidden] {
+  display: none;
+}
+
+.dialogue-body[hidden] {
+  display: none;
 }
 
 @supports (font-size: 1cqi) {
@@ -1067,6 +1189,19 @@ main {
 
   .dialogue-body p {
     font-size: calc(var(--dlg-body-size) / var(--dlg-art-w) * 100cqi);
+  }
+
+  .dialogue-options {
+    gap: calc(var(--dlg-option-gap-size) / var(--dlg-art-w) * 100cqi);
+  }
+
+  .dialogue-option-img {
+    height: calc(var(--dlg-option-img-size) / var(--dlg-art-w) * 100cqi);
+    max-width: calc(var(--dlg-option-max-w-pct) * 1cqi);
+  }
+
+  .dialogue-advance-img {
+    height: calc(var(--dlg-advance-img-size) / var(--dlg-art-w) * 100cqi);
   }
 }
 
@@ -1278,14 +1413,36 @@ main {
 
 .identities-modal {
   --u: calc(100cqw / var(--scene-art-w));
+  /*
+   * Layout inside past_identities.png (% of .identities-modal).
+   * Preview + gallery are absolutely positioned on .identities-panel.
+   */
+  --identities-panel-min-h-pct: 72;
+  --id-preview-left: 10%;
+  --id-preview-top: 9%;
+  --id-preview-width: 46%;
+  --id-preview-height: 81.7%;
+  --id-preview-stage-flex: 1;
+  /* Date + number — each positioned on .identities-preview (% of preview box) */
+  --id-preview-date-left: -4%;
+  --id-preview-date-bottom: -2%;
+  --id-preview-number-right: 3%;
+  --id-preview-number-bottom: -2%;
+  --id-preview-date-size: 18;
+  --id-preview-number-size: 18;
+  --id-gallery-left: 58.5%;
+  --id-gallery-top: 8.5%;
+  --id-gallery-width: 36%;
+  --id-gallery-height: 89%;
+  --id-gallery-scroll-padding: calc(14 * var(--u));
   width: calc(var(--identities-modal-size-pct) * 1cqw);
   max-height: calc(100% - 2 * var(--scene-modal-overlay-padding-pct) * 1cqh);
   transform: translateY(calc(var(--identities-modal-top-pct) * 1cqh / 100));
   box-sizing: border-box;
-  padding: calc(14 * var(--u));
-  background: var(--paper);
-  border: var(--border-thick);
-  box-shadow: 3px 3px 0 var(--line);
+  padding: 0;
+  background: url('images/general/past_identities.png') center / 100% 100% no-repeat;
+  border: none;
+  box-shadow: none;
   overflow: hidden;
 }
 
@@ -1301,32 +1458,36 @@ main {
 /* ── Identities gallery (inside identities-modal) ── */
 
 .identities-panel {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  gap: calc(14 * var(--u));
-  min-height: 0;
-  max-height: calc(85vh - 28 * var(--u));
+  position: relative;
+  width: 100%;
+  min-height: calc(var(--identities-panel-min-h-pct) * 1cqh);
+  box-sizing: border-box;
 }
 
 .identities-preview {
-  flex: 1 1 58%;
-  min-width: 0;
+  position: absolute;
+  left: var(--id-preview-left);
+  top: var(--id-preview-top);
+  width: var(--id-preview-width);
+  height: var(--id-preview-height);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: calc(8 * var(--u));
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
 }
 
 .identities-preview-stage {
   position: relative;
+  flex: var(--id-preview-stage-flex) 1 0;
   width: 100%;
-  aspect-ratio: var(--identity-art-w) / var(--identity-art-h);
-  max-height: min(70vh, calc(var(--identities-modal-size-pct) * 0.58 * 1cqw * var(--identity-art-h) / var(--identity-art-w)));
-  margin: 0 auto;
+  min-height: 0;
+  margin: 0;
   box-sizing: border-box;
-  background: #fff;
-  border: var(--border-thick);
-  box-shadow: 2px 2px 0 var(--line);
+  background: transparent;
+  border: none;
+  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1353,33 +1514,52 @@ main {
 }
 
 .identities-preview-meta {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: calc(8 * var(--u));
-  padding-top: calc(6 * var(--u));
-  font-family: var(--font-mono);
-  font-size: clamp(9px, calc(10 * var(--u)), 12px);
-  letter-spacing: 0.02em;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+}
+
+.identities-preview-meta[hidden] {
+  display: none !important;
+}
+
+.identities-preview-date {
+  position: absolute;
+  left: var(--id-preview-date-left);
+  bottom: var(--id-preview-date-bottom);
+  font-size: clamp(8px, calc(var(--id-preview-date-size) * var(--u)), 18px);
+  color: white;
+  white-space: nowrap;
 }
 
 .identities-preview-number {
+  position: absolute;
+  right: var(--id-preview-number-right);
+  bottom: var(--id-preview-number-bottom);
+  font-size: clamp(8px, calc(var(--id-preview-number-size) * var(--u)), 20px);
   font-weight: 700;
+  color: white;
+  white-space: nowrap;
 }
 
 .identities-gallery {
-  flex: 0 0 38%;
-  min-width: 0;
+  position: absolute;
+  left: var(--id-gallery-left);
+  top: var(--id-gallery-top);
+  width: var(--id-gallery-width);
+  height: var(--id-gallery-height);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   min-height: 0;
 }
 
 .identities-gallery-empty {
   margin: 0;
   padding: calc(10 * var(--u));
-  font-family: var(--font-mono);
   font-size: clamp(9px, calc(10 * var(--u)), 12px);
   line-height: 1.4;
   color: var(--muted);
@@ -1388,16 +1568,17 @@ main {
 }
 
 .identities-gallery-list {
+  flex: 1 1 auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  column-gap: 8px;
-  row-gap: calc(8 * var(--u));
+  column-gap: 10px;
+  row-gap: calc(18 * var(--u));
   align-content: start;
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
-  max-height: min(70vh, 520px);
-  padding-right: calc(4 * var(--u));
+  max-height: 100%;
+  padding-right: var(--id-gallery-scroll-padding);
 }
 
 .identity-thumb {
@@ -1412,7 +1593,6 @@ main {
   box-shadow: 2px 2px 0 var(--line);
   cursor: pointer;
   text-align: center;
-  font-family: var(--font-mono);
   line-height: 1;
 }
 
